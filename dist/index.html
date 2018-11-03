@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Quadtree</title>
+	<script src="./app.js"></script>
+</head>
+<body>
+	<div id="quadtree"></div>
+</body>
+<script>
+	const qt = new Quadtree('#quadtree', {
+		dim: 800,
+		render: true,
+	});
+	qt.addPoint([300, 300])
+	qt.addPoint([300, 500])
+	qt.addPoint([750, 750])
+	qt.addPoint([700, 120])
+
+	// for(var i = 0; i < 450; i++) {
+	// 	qt.addPoint([Math.random() * 800, Math.random() * 800])
+	// }
+	qt.render()
+</script>
+</html>

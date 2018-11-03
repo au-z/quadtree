@@ -1,15 +1,18 @@
 import Rect from "./struct/Rect";
+import {emitRedraw} from './render/TPyramidRenderer';
 type Point = [number, number];
 
 export default class TPyramid {
+  public index: string;
   public bounds: Rect;
   public points: Array<Point> = [];
   public children: Array<TPyramid> = [];
   private density: number;
 
-  constructor(bounds: Rect, density: number = 1) {
+  constructor(bounds: Rect, density: number = 1, index: string) {
     this.bounds = bounds;
     this.density = density;
+    this.index = index;
   }
 
   public addPoint(point: Point) {
@@ -49,32 +52,34 @@ export default class TPyramid {
   }
 
   private subd() {
-    const halfW = this.bounds.width() / 2;
-    const halfH = this.bounds.height() / 2;
+    const w = this.bounds.width() / 2;
+    const h = this.bounds.height() / 2;
     const b = this.bounds.get();
 
     const lw = b[0];
-    const mw = b[0] + halfW;
+    const mw = b[0] + w;
     const rw = b[1];
     const th = b[2];
-    const mh = b[2] + halfH;
+    const mh = b[2] + h;
     const bh = b[3];
 
-    this.children.push(new TPyramid(new Rect(lw, mw, th, mh), this.density));
-    this.children.push(new TPyramid(new Rect(mw, rw, th, mh), this.density));
-    this.children.push(new TPyramid(new Rect(lw, mw, mh, bh), this.density));
-    this.children.push(new TPyramid(new Rect(mw, rw, mh, bh), this.density));
+    this.children.push(new TPyramid(new Rect(lw, mw, th, mh), this.density, `${this.index}.0`));
+    this.children.push(new TPyramid(new Rect(mw, rw, th, mh), this.density, `${this.index}.1`));
+    this.children.push(new TPyramid(new Rect(lw, mw, mh, bh), this.density, `${this.index}.2`));
+    this.children.push(new TPyramid(new Rect(mw, rw, mh, bh), this.density, `${this.index}.3`));
 
     this.children.forEach(c => this.points.forEach(p => c.addPoint(p)));
     this.points = [];
+    emitRedraw(this.index);
   }
 
   private unsubd() {
     this.children = [];
+    emitRedraw(this.index);
   }
 
   private isUniquePoint(point: Point) {
-    return this.points.every(p => p[0] !== point[0] && p[1] !== point[1]);
+    return this.points.every(p => !(p[0] === point[0] && p[1] === point[1]));
   }
 
   private isInBounds(bounds: Rect, point: Point): boolean {
