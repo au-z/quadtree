@@ -12,7 +12,7 @@ export default class MouseEvents {
 
 	private onMouseUp(cb: Function) {
 		this.el.addEventListener('mouseup', (e) => {
-			e.preventDefault()
+			e.stopPropagation()
 			const x = e.clientX - this.el.offsetLeft
 			const y = e.clientY - this.el.offsetTop
 			cb([x, y])

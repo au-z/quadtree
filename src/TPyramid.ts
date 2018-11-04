@@ -1,5 +1,5 @@
 import Rect from "./struct/Rect";
-import {emitRedraw} from './render/TPyramidRenderer';
+import { emitRedraw } from './render/TPyramidRenderer';
 type Point = [number, number];
 
 export default class TPyramid {
@@ -26,8 +26,10 @@ export default class TPyramid {
       this.points.push(point);
       if (this.points.length > this.density && this.children.length === 0) {
         this.subd();
+        return emitRedraw(this);
       }
     }
+    return emitRedraw(this);
   }
 
   public deletePoint(point: Point) {
@@ -49,6 +51,7 @@ export default class TPyramid {
 
       return this.points;
     }
+    emitRedraw(this);
   }
 
   private subd() {
@@ -70,12 +73,11 @@ export default class TPyramid {
 
     this.children.forEach(c => this.points.forEach(p => c.addPoint(p)));
     this.points = [];
-    emitRedraw(this.index);
   }
 
   private unsubd() {
     this.children = [];
-    emitRedraw(this.index);
+    // emitRedraw(this.index);
   }
 
   private isUniquePoint(point: Point) {

@@ -1,60 +1,71 @@
 import TPyramid from "src/TPyramid";
-type Point = [number, number]
+import { NodeEl, PointEl } from './Elements';
+type Point = [number, number];
 
-export const DRAW_EVENT: string = 'tpyramidrender.redraw.index'
-export function emitRedraw(index: string) {
-	const event = new CustomEvent(DRAW_EVENT, {
-		detail: {
-			index,
-		},
-	})
-	document.dispatchEvent(event)
+export const REDRAW_EVENT: string = "tpyramidrender.redraw.index";
+export function emitRedraw(tree: TPyramid) {
+
+  function parentIndex(index: string) {
+    return index.replace(/(.?\d)$/ig, '');
+  }
+
+  const event = new CustomEvent(REDRAW_EVENT, {
+    detail: {
+      index: tree.index,
+      parent: parentIndex(tree.index),
+      tree,
+    },
+  });
+  document.body.dispatchEvent(event);
 }
 
 export default class TPyramidRenderer {
-	public rootEl: HTMLElement
-	private tree: TPyramid
-	
-	constructor(selector: string = 'quadtree', tree: TPyramid) {
-		this.tree = tree;
-		this.registerRootElement(selector);
-		this.drawTree(this.rootEl, this.tree);
-		// TODO
-		document.addEventListener(DRAW_EVENT, (e) => {
-			console.log(e);
-		});
-	}
+  public rootEl: HTMLElement;
+  private tree: TPyramid;
 
-	private registerRootElement(selector: string) {
-		this.rootEl = document.querySelector(selector);
-		if(!this.rootEl) throw new Error('Cannot find root element');
-		this.rootEl.classList.add('quadtree')
-		this.rootEl.style.width = `${this.tree.bounds.width()}px`
-		this.rootEl.style.height = `${this.tree.bounds.height()}px`
-	}
+  constructor(selector: string = "quadtree", tree: TPyramid) {
+    this.tree = tree;
+    this.rootEl = this.registerRootElement(selector, tree);
+    this.drawTree(this.rootEl, this.tree);
+    // TODO
+    document.body.addEventListener(REDRAW_EVENT, (e: CustomEvent) => {
+      const parentEl = this.findIndexedDomNode(e.detail.parent);
+      const el = this.findIndexedDomNode(e.detail.index);
 
-	private drawTree(el: HTMLElement, tree: TPyramid) {
-		const node = document.createElement('div')
-		node.classList.add('node')
-		node.style.width = `${tree.bounds.width()}px`
-		node.style.height = `${tree.bounds.height()}px`
-		node.style.left = `${tree.bounds.corners[0]}px`
-		node.style.top = `${tree.bounds.corners[2]}px`
+      if (el && e.detail.tree) {
+        this.eraseChildren(el);
+        parentEl.removeChild(el);
+        this.drawTree(parentEl, e.detail.tree);
+      }
+    });
+  }
 
-		el.appendChild(node);
-		if(tree.children.length > 0) {
-			tree.children.forEach((c) => this.drawTree(node, c))
-		}
-		if(tree.points.length > 0) {
-			tree.points.forEach((p) => this.drawPoint(node, p))
-		}
-	}
+  private findIndexedDomNode(index: string): HTMLElement {
+    if (index === '') return this.rootEl
+    return document.querySelector(`div[data-index="${index}"]`)
+  }
 
-	private drawPoint(node: HTMLElement, point: Point) {
-		const el = document.createElement('div')
-		el.classList.add('point')
-		el.style.left = `${point[0] - 2}px`
-		el.style.top = `${point[1] - 2}px`
-		node.appendChild(el)
-	}
+  private registerRootElement(selector: string, tree: TPyramid): HTMLElement {
+    const el: HTMLElement = document.querySelector(selector);
+    if (!el) throw new Error("Cannot find root element");
+    el.classList.add("quadtree");
+    el.style.width = `${this.tree.bounds.width()}px`;
+    el.style.height = `${this.tree.bounds.height()}px`;
+    return el;
+  }
+
+  private eraseChildren(el: HTMLElement) {
+    while (el.lastChild) el.removeChild(el.lastChild);
+  }
+
+  private drawTree(el: HTMLElement, tree: TPyramid) {
+    const node = NodeEl(tree);
+    el.appendChild(node);
+
+    if (tree.children.length > 0) {
+      tree.children.forEach((c) => this.drawTree(node, c));
+    } else {
+      tree.points.forEach((p) => node.appendChild(PointEl(node, p)));
+    }
+  }
 }
